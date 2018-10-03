@@ -1,13 +1,14 @@
-#coding:utf-8
 from bs4 import BeautifulSoup
 import re
-from urllib.parse import urljoin
+from urllib.parse import urljoin 
+
+# with python 3.x
 
 class HtmlParser(object):
     
     def get_new_urls(self, page_url, soup):
         new_urls = set()
-        links = soup.find_all('a', href=re.compile(r"/item/"))
+        links = soup.find_all('a', href=re.compile(r"/item/")) # match "/item/" 
         for link in links:
             new_url = link['href']
             new_full_url = urljoin(page_url, new_url)
@@ -15,11 +16,13 @@ class HtmlParser(object):
         return new_urls
 
     def get_new_data(self, page_url, soup):
-        res_data = {}
+        """Get new data with BS4."""
+        res_data = {} # a dict to save data. 
 
         # url
         res_data['url'] = page_url
 
+        # title
         """
         <dd class="lemmaWgt-lemmaTitle-title">
         <h1>Python</h1>
@@ -29,12 +32,17 @@ class HtmlParser(object):
         </dd>
         """
         title_node = soup.find('dd', class_="lemmaWgt-lemmaTitle-title")
-        if title_node.h2 is None:
+        print(title_node.h1)
+        print(title_node.h2)
+        if title_node.h2 is not None:
+            res_data['title'] = title_node.h1.string + title_node.h2.string  
+        elif title_node.h1 is not None:
             res_data['title'] = title_node.h1.string
-        elif title_node.h2 is not None:
-            res_data['title'] = title_node.h1.string + title_node.h2.string
-
-        # <div class="para" label-module="para">Python 是一门有条理的和强大的面向对象的程序设计语言，类似于Perl, Ruby, Scheme, Java.</div>
+        # improved the disambiguation
+        print("TITLE >> ", res_data['title'])
+        
+        # data / summary
+        """ <div class="para" label-module="para">Python 是一门有条理的和强大的面向对象的程序设计语言，类似于Perl, Ruby, Scheme, Java.</div> """
 
         summary_node = soup.find('div', class_="lemma-summary")
         res_data['data'] = summary_node.get_text()
